@@ -1,0 +1,18 @@
+{
+  "name": "xhs-note-gen",
+  "version": "1.0.0",
+  "description": "Xiaohongshu note generator with crawler proxy and local HTML UI",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "playwright": "^1.50.0"
+  }
+}

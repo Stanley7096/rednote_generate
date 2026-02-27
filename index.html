@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>小红书笔记生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;600;700&family=Chivo:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1014;
+      --card: #1a1d24;
+      --ink: #f7f5f0;
+      --muted: #b5b9c3;
+      --accent: #f5c26b;
+      --accent-2: #7ee2c8;
+      --danger: #ff7474;
+      --ok: #7ee2c8;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #2e3242 0%, #101118 40%, #0b0c10 100%);
+      color: var(--ink);
+      font-family: "Chivo", "Noto Serif SC", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 36px 20px 80px;
+      position: relative;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+      font-family: "ZCOOL XiaoWei", "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: clamp(28px, 4vw, 44px);
+      margin: 0 0 8px;
+    }
+
+    .title-block p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 580px;
+      line-height: 1.6;
+    }
+
+    .status {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #1f2230;
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    .status.ok {
+      color: #0d2f25;
+      background: rgba(126, 226, 200, 0.85);
+      border-color: rgba(126, 226, 200, 0.8);
+    }
+
+    .status.error {
+      color: #391010;
+      background: rgba(255, 116, 116, 0.9);
+      border-color: rgba(255, 116, 116, 0.8);
+    }
+
+    .panel {
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(245, 194, 107, 0.1), transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(126, 226, 200, 0.08), transparent 55%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .panel > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      font-family: "Noto Serif SC", serif;
+    }
+
+    .field {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      background: #12141b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: var(--ink);
+      padding: 12px 14px;
+      font-size: 15px;
+      width: 100%;
+      font-family: "Chivo", "Noto Serif SC", sans-serif;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      color: #101118;
+      background: var(--accent);
+      box-shadow: 0 12px 20px rgba(245, 194, 107, 0.25);
+    }
+
+    .btn.secondary {
+      background: #232836;
+      color: var(--ink);
+      box-shadow: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .source-preview {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    }
+
+    .source-text {
+      background: rgba(18, 20, 27, 0.9);
+      border-radius: 14px;
+      padding: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-height: 260px;
+      overflow: auto;
+      font-size: 14px;
+    }
+
+    .image-strip {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .image-strip img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .style-card {
+      background: #12141b;
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .style-card.active {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 28px rgba(245, 194, 107, 0.2);
+    }
+
+    .style-preview {
+      height: 120px;
+      border-radius: 12px;
+      background: linear-gradient(120deg, #eae1d0, #f4c97c);
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      color: #12141b;
+      font-family: "Noto Serif SC", serif;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .style-card h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .style-card p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .output {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+
+    .copy-box {
+      background: rgba(17, 19, 25, 0.9);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      line-height: 1.7;
+      min-height: 320px;
+      font-size: 14px;
+    }
+
+    .copy-box h4 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .copy-box pre {
+      white-space: pre-wrap;
+      font-family: inherit;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .canvas-wrap {
+      background: #141720;
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #0f1014;
+    }
+
+    details {
+      margin-top: 12px;
+      background: rgba(17, 19, 25, 0.7);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    details summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    @media (max-width: 900px) {
+      .source-preview,
+      .output {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <h1>小红书笔记生成器</h1>
+        <p>输入小红书链接，抓取原帖图文，选择风格并加入你的要求，生成新的小红书文案与可下载 PNG 卡片。</p>
+      </div>
+      <div id="status" class="status">等待输入链接</div>
+    </header>
+
+    <section class="panel">
+      <h2>1. 填写链接与后端地址</h2>
+      <div class="row">
+        <div>
+          <label class="label" for="apiBase">后端地址（Render 或本地）</label>
+          <input id="apiBase" type="text" placeholder="例如：http://localhost:3000 或 https://xxx.onrender.com" />
+        </div>
+        <div>
+          <label class="label" for="xhsUrl">小红书帖子 URL</label>
+          <input id="xhsUrl" type="text" placeholder="粘贴小红书帖子链接" />
+        </div>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <button id="fetchBtn" class="btn">抓取内容</button>
+        <button id="demoBtn" class="btn secondary">使用演示数据</button>
+      </div>
+      <details>
+        <summary>抓取失败？手动粘贴内容</summary>
+        <div class="row" style="margin-top: 10px;">
+          <div>
+            <label class="label" for="manualText">手动文本</label>
+            <textarea id="manualText" placeholder="粘贴原帖文字内容"></textarea>
+          </div>
+          <div>
+            <label class="label" for="manualImages">手动图片链接（用逗号分隔）</label>
+            <textarea id="manualImages" placeholder="https://... , https://..."></textarea>
+          </div>
+        </div>
+        <div class="field" style="margin-top: 10px;">
+          <button id="applyManual" class="btn secondary">应用手动内容</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>2. 原帖预览</h2>
+      <div class="source-preview">
+        <div>
+          <div style="font-weight: 600; margin-bottom: 8px;" id="sourceTitle">尚未抓取</div>
+          <div id="sourceText" class="source-text">请先抓取或使用演示数据。</div>
+        </div>
+        <div>
+          <div class="image-strip" id="sourceImages"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3. 选择小红书风格</h2>
+      <div id="styleGrid" class="grid three"></div>
+    </section>
+
+    <section class="panel">
+      <h2>4. 输入你的生成要求</h2>
+      <textarea id="userPrompt" placeholder="例如：主题：通勤好物；语气：轻松种草；关键词：省时、质感、通勤" ></textarea>
+      <div class="field" style="margin-top: 12px;">
+        <button id="generateBtn" class="btn">生成文案与图片</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>5. 生成结果</h2>
+      <div class="output">
+        <div class="copy-box">
+          <h4>生成文案</h4>
+          <pre id="copyOutput">点击“生成”后在此查看。</pre>
+          <div class="field" style="margin-top: 12px;">
+            <button id="copyBtn" class="btn secondary">复制文案</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="cardCanvas" width="1080" height="1440"></canvas>
+          <div class="field">
+            <button id="downloadBtn" class="btn">下载 PNG</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const styles = [
+      {
+        id: 'fresh',
+        name: '清新治愈',
+        description: '柔和配色 + 生活感，适合日常分享与治愈系笔记。',
+        preview: ['#e9f3ef', '#bde8d0'],
+        palette: ['#edf7f3', '#d2f0df'],
+        accent: '#2b6b5b',
+        mood: '温柔、轻盈、带一点小确幸',
+        hook: '今天想把这份舒服感分享给你'
+      },
+      {
+        id: 'minimal',
+        name: '极简高级',
+        description: '黑白灰为主，结构清晰，适合效率与质感主题。',
+        preview: ['#f4f4f4', '#c6c6c6'],
+        palette: ['#f6f6f6', '#d7d7d7'],
+        accent: '#1f1f1f',
+        mood: '克制、干净、有质感',
+        hook: '一张图讲清楚重点'
+      },
+      {
+        id: 'seeding',
+        name: '种草测评',
+        description: '重点突出 + 标签化表达，适合产品测评和清单。',
+        preview: ['#fff1e2', '#f7b267'],
+        palette: ['#fff6ea', '#ffe1c4'],
+        accent: '#9b4a1b',
+        mood: '直接、有效、适合快速决策',
+        hook: '最近被问爆的细节都在这'
+      },
+      {
+        id: 'travel',
+        name: '旅行日记',
+        description: '轻快明亮 + 城市感，适合旅行与生活方式。',
+        preview: ['#e2f0ff', '#a8d8ff'],
+        palette: ['#e9f5ff', '#cfe6ff'],
+        accent: '#1b4f9b',
+        mood: '轻快、带点故事感',
+        hook: '把这段旅程记下来'
+      }
+    ];
+
+    const demoData = {
+      title: '通勤好物分享｜我这半年离不开的随身清单',
+      text: '每天通勤两个小时，越来越珍惜省时又有质感的小物。最近在用的三样东西非常推荐：轻薄保温杯、分区收纳包、舒适降噪耳机。它们让我在地铁里也能保持好状态。\n\n保温杯很轻，放包里不压肩；收纳包能把化妆品和线材分开，节省找东西的时间；降噪耳机是真的安静，开工前还能听播客放松一下。\n\n如果你也经常通勤，可以试试这个组合。',
+      images: [
+        createPlaceholder('#f7d6bf', '#f2a97b'),
+        createPlaceholder('#cfe7ff', '#6aa2e0'),
+        createPlaceholder('#e6f3d8', '#8dc37b')
+      ]
+    };
+
+    const statusEl = document.getElementById('status');
+    const apiBaseInput = document.getElementById('apiBase');
+    const urlInput = document.getElementById('xhsUrl');
+    const fetchBtn = document.getElementById('fetchBtn');
+    const demoBtn = document.getElementById('demoBtn');
+    const applyManualBtn = document.getElementById('applyManual');
+    const sourceTitleEl = document.getElementById('sourceTitle');
+    const sourceTextEl = document.getElementById('sourceText');
+    const sourceImagesEl = document.getElementById('sourceImages');
+    const styleGrid = document.getElementById('styleGrid');
+    const userPromptEl = document.getElementById('userPrompt');
+    const generateBtn = document.getElementById('generateBtn');
+    const copyOutputEl = document.getElementById('copyOutput');
+    const copyBtn = document.getElementById('copyBtn');
+    const canvas = document.getElementById('cardCanvas');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const manualTextEl = document.getElementById('manualText');
+    const manualImagesEl = document.getElementById('manualImages');
+
+    let selectedStyle = styles[0];
+    let sourceData = null;
+
+    const storedApiBase = localStorage.getItem('xhs_api_base');
+    if (storedApiBase) {
+      apiBaseInput.value = storedApiBase;
+    }
+
+    function setStatus(message, type) {
+      statusEl.textContent = message;
+      statusEl.className = 'status';
+      if (type === 'ok') statusEl.classList.add('ok');
+      if (type === 'error') statusEl.classList.add('error');
+    }
+
+    function getApiBase() {
+      const value = apiBaseInput.value.trim();
+      return value ? value.replace(/\/$/, '') : '';
+    }
+
+    function renderStyles() {
+      styleGrid.innerHTML = '';
+      styles.forEach((style) => {
+        const card = document.createElement('div');
+        card.className = 'style-card' + (style.id === selectedStyle.id ? ' active' : '');
+        card.innerHTML = `
+          <div class="style-preview" style="background: linear-gradient(130deg, ${style.preview[0]}, ${style.preview[1]});">
+            ${style.name}
+          </div>
+          <h3>${style.name}</h3>
+          <p>${style.description}</p>
+        `;
+        card.addEventListener('click', () => {
+          selectedStyle = style;
+          renderStyles();
+        });
+        styleGrid.appendChild(card);
+      });
+    }
+
+    function renderSource(data) {
+      sourceTitleEl.textContent = data.title || '未识别标题';
+      sourceTextEl.textContent = data.text || '未识别文字';
+      sourceImagesEl.innerHTML = '';
+
+      (data.images || []).slice(0, 6).forEach((url) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'source';
+        sourceImagesEl.appendChild(img);
+      });
+    }
+
+    async function fetchSource() {
+      const url = urlInput.value.trim();
+      const apiBase = getApiBase();
+
+      if (!apiBase) {
+        setStatus('请填写后端地址', 'error');
+        return;
+      }
+
+      if (!url) {
+        setStatus('请输入小红书链接', 'error');
+        return;
+      }
+
+      setStatus('抓取中，请稍候...', '');
+      try {
+        const response = await fetch(`${apiBase}/api/extract?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error(data.error || '抓取失败');
+        }
+        sourceData = data;
+        renderSource(sourceData);
+        setStatus('抓取完成', 'ok');
+      } catch (err) {
+        setStatus(`抓取失败：${err.message}`, 'error');
+      }
+    }
+
+    function applyManualData() {
+      const text = manualTextEl.value.trim();
+      const images = manualImagesEl.value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (!text && images.length === 0) {
+        setStatus('请至少填一项手动内容', 'error');
+        return;
+      }
+
+      sourceData = {
+        title: '手动输入内容',
+        text,
+        images
+      };
+      renderSource(sourceData);
+      setStatus('已应用手动内容', 'ok');
+    }
+
+    function loadDemo() {
+      sourceData = demoData;
+      renderSource(sourceData);
+      setStatus('已加载演示数据', 'ok');
+    }
+
+    function extractKeywords(text) {
+      if (!text) return [];
+      const cleaned = text
+        .replace(/[\n\r]/g, ' ')
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ]/g, ' ')
+        .replace(/\s+/g, ' ');
+
+      const tokens = cleaned.split(' ').filter((t) => t.length >= 2);
+      const stop = new Set(['我们', '你们', '他们', '然后', '因为', '这个', '那个', '以及', '可以', '就是', '还是', '但是', '如果', '最近', '今天', '感觉', '已经', '自己', '非常']);
+      const map = new Map();
+
+      tokens.forEach((token) => {
+        if (stop.has(token)) return;
+        map.set(token, (map.get(token) || 0) + 1);
+      });
+
+      return Array.from(map.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([word]) => word);
+    }
+
+    function buildCopy(text, prompt, style) {
+      const keywords = extractKeywords(text + ' ' + prompt);
+      const summary = text
+        .split(/[。！？!?]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 6)
+        .slice(0, 3)
+        .join('。');
+
+      const topic = keywords[0] || '生活小物';
+      const title = `${style.hook}｜${topic}`;
+
+      const bullets = [
+        `核心感受：${style.mood}`,
+        `重点关键词：${keywords.slice(0, 4).join(' / ') || '舒适 / 省时 / 质感'}`,
+        `适合人群：${prompt ? '符合你的要求' : '通勤党 / 忙碌党 / 想提升质感的人'}`
+      ];
+
+      const body = summary ? `${summary}。` : '这次想分享几个让我省心又舒服的小细节。';
+      const closing = prompt
+        ? `根据你的要求，我把重点放在：${prompt}`
+        : '如果你也需要更高效的日常体验，可以试试这个组合。';
+
+      const hashtags = keywords.length
+        ? keywords.map((k) => `#${k}`).join(' ')
+        : '#通勤好物 #日常分享 #质感生活';
+
+      return {
+        title,
+        body,
+        bullets,
+        closing,
+        hashtags
+      };
+    }
+
+    function proxyImage(url) {
+      const apiBase = getApiBase();
+      if (!apiBase) return url;
+      if (url.startsWith('data:')) return url;
+      return `${apiBase}/api/image?url=${encodeURIComponent(url)}`;
+    }
+
+    function loadImage(url) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    async function drawCard(copy) {
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, selectedStyle.palette[0]);
+      gradient.addColorStop(1, selectedStyle.palette[1]);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      let imageDrawn = false;
+      const images = sourceData && sourceData.images ? sourceData.images : [];
+      if (images.length) {
+        try {
+          const imageUrl = proxyImage(images[0]);
+          const img = await loadImage(imageUrl);
+          const imgHeight = Math.floor(height * 0.48);
+          ctx.drawImage(img, 0, 0, width, imgHeight);
+          ctx.fillStyle = 'rgba(0,0,0,0.25)';
+          ctx.fillRect(0, 0, width, imgHeight);
+          imageDrawn = true;
+        } catch (_) {
+          imageDrawn = false;
+        }
+      }
+
+      const padding = 64;
+      const top = imageDrawn ? Math.floor(height * 0.5) : padding + 20;
+
+      ctx.fillStyle = selectedStyle.accent;
+      ctx.fillRect(padding, top - 34, 150, 6);
+
+      await document.fonts.ready;
+      ctx.fillStyle = '#0f1014';
+      ctx.font = '700 64px "Noto Serif SC", serif';
+      wrapText(ctx, copy.title, padding, top + 40, width - padding * 2, 72, 2);
+
+      ctx.fillStyle = '#1c1d21';
+      ctx.font = '400 36px "Chivo", "Noto Serif SC", sans-serif';
+      wrapText(ctx, copy.body, padding, top + 150, width - padding * 2, 50, 3);
+
+      ctx.fillStyle = '#1c1d21';
+      ctx.font = '600 34px "Chivo", "Noto Serif SC", sans-serif';
+      const bulletStart = top + 330;
+      copy.bullets.forEach((line, index) => {
+        ctx.fillText(`• ${line}`, padding, bulletStart + index * 54, width - padding * 2);
+      });
+
+      ctx.fillStyle = '#1f1f1f';
+      ctx.font = '500 30px "Chivo", "Noto Serif SC", sans-serif';
+      wrapText(ctx, copy.hashtags, padding, height - 120, width - padding * 2, 40, 2);
+
+      ctx.fillStyle = '#1f1f1f';
+      ctx.font = '500 28px "Chivo", "Noto Serif SC", sans-serif';
+      ctx.fillText('小红书风格生成', padding, height - 48);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+      const words = text.split('');
+      let line = '';
+      let lines = 0;
+
+      for (let i = 0; i < words.length; i += 1) {
+        const testLine = line + words[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line !== '') {
+          ctx.fillText(line, x, y + lineHeight * lines);
+          line = words[i];
+          lines += 1;
+          if (lines >= maxLines) return;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y + lineHeight * lines);
+    }
+
+    function updateOutput(copy) {
+      copyOutputEl.textContent = `${copy.title}\n\n${copy.body}\n\n${copy.bullets.join('\n')}\n\n${copy.closing}\n\n${copy.hashtags}`;
+    }
+
+    async function handleGenerate() {
+      if (!sourceData) {
+        setStatus('请先抓取或使用演示数据', 'error');
+        return;
+      }
+
+      const copy = buildCopy(sourceData.text || '', userPromptEl.value.trim(), selectedStyle);
+      updateOutput(copy);
+      await drawCard(copy);
+      setStatus('生成完成', 'ok');
+    }
+
+    function copyText() {
+      const text = copyOutputEl.textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        setStatus('文案已复制', 'ok');
+      });
+    }
+
+    function downloadPng() {
+      const link = document.createElement('a');
+      link.download = 'xhs-card.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function createPlaceholder(from, to) {
+      const c = document.createElement('canvas');
+      c.width = 400;
+      c.height = 300;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, c.width, c.height);
+      g.addColorStop(0, from);
+      g.addColorStop(1, to);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '700 32px "Chivo", sans-serif';
+      ctx.fillText('DEMO', 140, 160);
+      return c.toDataURL('image/png');
+    }
+
+    fetchBtn.addEventListener('click', fetchSource);
+    demoBtn.addEventListener('click', loadDemo);
+    applyManualBtn.addEventListener('click', applyManualData);
+    generateBtn.addEventListener('click', handleGenerate);
+    copyBtn.addEventListener('click', copyText);
+    downloadBtn.addEventListener('click', downloadPng);
+    apiBaseInput.addEventListener('change', () => {
+      localStorage.setItem('xhs_api_base', apiBaseInput.value.trim());
+    });
+
+    renderStyles();
+    drawCard(buildCopy(demoData.text, '', styles[0])).catch(() => {});
+  </script>
+</body>
+</html>
