@@ -28,11 +28,11 @@ npm start
 - 将“后端地址”设置为 `http://localhost:3000`
 
 ## 一键部署（Render 推荐）
-本项目已包含 `render.yaml`，适配 Render Blueprint 一键部署。
+本项目已包含 `render.yaml` + `Dockerfile`，使用 Playwright 官方镜像避免浏览器安装失败，适配 Render Blueprint 一键部署。
 
 1. 把项目推送到 GitHub
 2. 打开 Render 控制台，选择 **New +** -> **Blueprint**
-3. 选择该仓库，Render 会自动读取 `render.yaml` 并部署
+3. 选择该仓库，Render 会自动读取 `render.yaml` 与 `Dockerfile` 并部署
 
 如果需要按钮方式，可以在 README 加入如下链接（替换你的仓库地址）：
 

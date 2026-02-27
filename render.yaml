@@ -1,10 +1,9 @@
 services:
   - type: web
     name: xhs-note-gen
-    env: node
+    env: docker
     plan: free
-    buildCommand: "npm install && npx playwright install --with-deps chromium"
-    startCommand: "node server.js"
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
